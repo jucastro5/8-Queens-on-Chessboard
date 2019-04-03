@@ -1,77 +1,195 @@
-import numpy as np
-import matplotlib.pyplot as plt
+import random
 
-def buffon(iterations = 100, noprint=False):
-    if noprint==False: print("\ntossin' {} needles....".format(iterations))
-    #how long the needle is. .5 is half the length between the floorboards.
-    #setting it to 1 (or length between floorboards) results in pi/2.
-    r = .5
-    accuracy=.0001
-    x = []
-    y = []
-    x2 = []
-    y2 = []
-    position = 0
-    count = 0
-    #visualsing the lines on the floor
-    xlines = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    #plotting configuration
-    test = plt.figure(figsize=(20,20))
-    t1 = test.add_subplot(2,2,1)
-    t2 = test.add_subplot(2,1,2)
-    plt.subplots_adjust(wspace=.2, hspace=.2)
-    t2.set_xlim([0, iterations])
-    t2.set_ylim([np.pi-1, np.pi+1])
-    t2.set_title('\u03C0 Estimate Over {} Iterations (\u03C0 = Red Line)'.format(iterations))
-    t1.set_xlim([-.2,10.2])
-    t1.set_ylim([0,10])
-    t1.set_title('The Floor with {} needles'.format(iterations))
-    #drawing vertical floorboards
-    for lines in xlines:
-        t1.axvline(color='green', alpha=.4, x=lines)
-    #pi reference line
-    t2.axhline(y=np.pi, color='r', linestyle='-')
-    #create x/y coordinates for points
-    for i in range(1, iterations+1):
-        pointx = (np.random.choice(np.arange(1, 9, accuracy)))
-        pointy= (np.random.choice(np.arange(1, 9, accuracy)))
-        theta = np.random.choice(np.arange(0, 2*np.pi+accuracy, accuracy))
-        x.append(pointx)
-        y.append(pointy)
-        x.append(pointx + (r * np.cos(theta)))
-        y.append(pointy + (r * np.sin(theta)))
-    #selecting x,y pairs for plotting needle visualization
-    for i in range(0, len(x)-1, 2):
-        #checking if lines cross (x values change)
-        if str((x[i+1]))[0] != str((x[i]))[0]:
-            t1.plot(x[i:i+2], y[i:i+2], color='red', linewidth=.5)
-            count+=1
-            #collecting data for secondary (cot) graph
-            position += 1
-            x2.append(position)
-            y2.append(position/count)
-        #colors needle blue if it did not cross
+def eightQueens(coords, draw = True):
+
+    def draw_board():
+        levels = 8
+        for x in range(levels, 0, -1):
+            base = '\n{}  '.format(x)
+            for y in range(1, levels+1):
+                if (y, x) in Queenlocations:
+                    base += queen
+                elif (y, x) in valid_locations:
+                    base += valid
+                    updated_valid.append((y, x))
+                else:
+                    base += empty
+
+            if draw == True: print(base)
+        if draw == True: print('   A  B  C  D  E  F  G  H')
+
+    def invalid_spot(queen):
+        xmax = max(8 - queen[0], queen[0])
+        ymax = max(8 - queen[1], queen[1])
+        output = []
+        for xdelta in range(1, xmax +1):
+            for ydelta in range(1, ymax+1):
+                if xdelta == ydelta:
+                    pass
+                else:
+                    if queen[0] + xdelta <= 8 and queen[1] + ydelta <= 8:
+                        output.append((queen[0] + xdelta, queen[1] + ydelta))
+                    if queen[0] + xdelta <= 8 and queen[1] - ydelta > 0:
+                        output.append((queen[0] + xdelta, queen[1] - ydelta))
+                    if queen[0] - xdelta > 0 and  queen[1] + ydelta <= 8:
+                        output.append((queen[0] - xdelta, queen[1] + ydelta))
+                    if queen[0] - xdelta > 0 and  queen[1] - ydelta > 0:
+                        output.append((queen[0] - xdelta, queen[1] - ydelta))
+        return output
+
+    def multi_invalid_spot(spots):
+        if len(spots) == 1:
+            return invalid_spot(spots[0])
+        workingset = spots
+        convertingset = []
+        answer = []
+        output = []
+        for i in workingset:
+            convertingset.append(invalid_spot(i))
+        for queen in convertingset:
+            for point in queen:
+                count = 0
+                for queen2 in convertingset:
+                    if point in queen2:
+                        count += 1
+                if count == len(convertingset):
+                    answer.append(point)
+        return answer
+
+    def is_valid():
+        for i in Queenlocations:
+            x = i[0]
+            y = i[1]
+            for z in Queenlocations:
+                if z == i:
+                    pass
+                elif z[0] == x:
+                    if draw == True: print('\nupdown conflict!')
+                    return False
+                elif z[1] == y:
+                    if draw == True: print('\nsidetoside conflict!')
+                    return False
+                elif abs(x - z[0]) == abs(y - z[1]):
+                    if draw == True: print('\ndiagonal conflict!')
+                    return False
+                else:
+                    pass
+        if (len(updated_valid) == 0) and (len(coords) == 8):
+            return True
+        elif len(updated_valid) < 8-len(coords):
+            if draw == True:
+                print\
+                ('\nRemaining Queens outnumber potential spots.. Restart.')
+            return False
         else:
-            t1.plot(x[i:i+2], y[i:i+2], color='blue', linewidth=.5)
-            position += 1
-            #collecting data for secondary (cot) graph
-            if count != 0:
-                y2.append(position/count)
-                x2.append(position)
-            else:
-                x2.append(0)
-                y2.append(0)
-    #plot secondary (cot) graph
-    t2.plot(x2, y2)
-    plt.savefig('n={}_buffon.png'.format(iterations))
-    #info print out
-    if count > 1 and noprint==False:
-        print('_____________________________________________\n')
-        print('Needles dropped: {0}'.format(iterations))
-        print('Needles that crossed: {0}'.format(count))
-        print('\u03C0 estimation (total needles/needles crossed):\n{0}'.format(iterations/count))
-        print('Graph saved in local directory')
-        print('_____________________________________________')
+            if draw == True:
+                print('\n')
+            updated_valid.sort()
+            return updated_valid
 
-x = int(input('num iterations? '))
-buffon(x)
+    queen = 'X  '
+    valid = 'O  '
+    empty = 'O  '
+    valid_locations = multi_invalid_spot(coords)
+    Queenlocations = coords
+    updated_valid = []
+    draw_board()
+    return is_valid()
+
+def tester(draw=True):
+    global count
+    global iterations
+    global all_solutions
+    x = 1
+    y = random.choice(range(1, 9))
+    test_set = []
+    test_set.append((x,y))
+    if draw ==True:
+        batch = eightQueens(test_set)
+    elif draw == False:
+        batch = eightQueens(test_set, False)
+    while type(batch) == list:
+        if len([i for i in batch if i[0] == x + 1]) == 0:
+            if draw == True:
+                print('Column {} invalid. Must be 1 Queen per row.. restart'\
+                .format(x+1))
+            count +=1
+            if count == iterations:
+                sol_set = set(map(tuple, all_solutions))
+                solutions = list(map(list, sol_set))
+                print('\n{0} unique solutions in {1} iterations:'\
+                .format(len(solutions), iterations))
+                return solutions
+            else:
+                if draw == True:
+                    return tester()
+                elif draw == False:
+                    return tester(False)
+        new = random.choice([i for i in batch if i[0] == x + 1])
+        x += 1
+        test_set.append(new)
+        if draw ==True:
+            batch = eightQueens(test_set)
+        elif draw == False:
+            batch = eightQueens(test_set, False)
+    if batch == False:
+        count += 1
+        if count == iterations:
+            sol_set = set(map(tuple, all_solutions))
+            solutions = list(map(list, sol_set))
+            print('\n{0} unique solutions in {1} iterations:'\
+            .format(len(solutions), iterations))
+            return solutions
+        else:
+            if draw == True:
+                return tester()
+            elif draw == False:
+                return tester(False)
+    elif batch == True:
+        count += 1
+        all_solutions.append(test_set)
+        if count == iterations:
+            sol_set = set(map(tuple, all_solutions))
+            solutions = list(map(list, sol_set))
+            print('\n{0} unique solutions in {1} iterations:'\
+            .format(len(solutions), iterations))
+            return solutions
+        else:
+            if draw == True:
+                print('\nSolution found with the following coordinates:\n'\
+                , test_set)
+            if draw == True:
+                return tester()
+            elif draw == False:
+                return tester(False)
+count = 0
+all_solutions = []
+iterations = int(input('Iterations: '))
+para1 = str(input('Draw process? (T/F):'))
+para2 = int(input\
+('Display found solutions in Cartesian or Chess coordinates? (1 or 2):'))
+if para1 in ['T', 't']:
+    para1 = True
+elif para1 in ['F', 'f']:
+    para1 = False
+x = tester(para1)
+if para2 == 1:
+    for i in x:
+        print('\n', i)
+elif para2 == 2:
+    def converter(point):
+        ref = {'A':1, 'B':2, 'C':3, 'D':4, 'E':5, 'F':6, 'G':7, 'H':8}
+        backwards_ref = \
+        {1:'A', 2:'B', 3:'C', 4:'D', 5:'E', 6:'F', 7:'G', 8:'H'}
+        if type(point[0]) == int:
+            return '{0}{1}'.format(backwards_ref[point[0]], point[1])
+        elif type(point[0]) == str:
+            return (ref[point[0]], int(point[1]))
+    out = []
+    for i in x:
+        temp = []
+        for j in i:
+            temp.append(converter(j))
+        out.append(temp)
+    for i in out:
+        print('\n', i)
